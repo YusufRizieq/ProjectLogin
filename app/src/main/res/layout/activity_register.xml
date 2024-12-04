@@ -36,7 +36,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:gravity="center"
-            android:text="LOGIN"
+            android:text="REGISTER"
             android:textColor="#7E60BF"
             android:textSize="30sp"
             android:textStyle="bold"/>
@@ -157,6 +157,7 @@
 
     <!--  Button Register  -->
     <Button
+        android:id="@+id/btnRegister"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
