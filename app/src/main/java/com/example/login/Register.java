@@ -1,36 +1,44 @@
 package com.example.login;
 
+import android.content.DialogInterface;
 import android.os.Bundle;
-import android.text.TextUtils;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.View;
+import android.widget.ArrayAdapter;
+import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
-import androidx.activity.EdgeToEdge;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 
-public class Register extends AppCompatActivity {
+public class Register extends AppCompatActivity implements TextWatcher {
+    // Data untuk AutoComplete Email
+    private AutoCompleteTextView acEmail;
+    private String[] emailsugestion = {"admin@gmail.com", "admin@yahoo.com", "admin@outlook.com", "@hotmail.com"};
 
-    EditText inpEmail, inpUsername, inpPassword;
-    Button btnRegister;
+    // Data untuk Kota Asal
+    private String[] kota = {"Yogyakarta", "Cirebon", "Kuningan", "Majalengka", "Jakarta"};
+    private EditText etKotaAsal;
 
-    // List untuk menyimpan data pengguna
-    ArrayList<HashMap<String, String>> userList;
+    // Input lainnya
+    private EditText etUsername, etPassword;
+    private Button btnRegister;
+
+    // HashMap untuk menyimpan data
+    private HashMap<String, String> userData = new HashMap<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        EdgeToEdge.enable(this);
         setContentView(R.layout.activity_register);
-
-        // Atur padding untuk Edge-to-Edge
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
@@ -38,67 +46,70 @@ public class Register extends AppCompatActivity {
         });
 
         // Inisialisasi elemen UI
-        inpEmail = findViewById(R.id.inpEmail);
-        inpUsername = findViewById(R.id.inpUsername);
-        inpPassword = findViewById(R.id.inpPassword);
+        acEmail = findViewById(R.id.autoCompleteEmail);
+        etUsername = findViewById(R.id.inpUsername);
+        etPassword = findViewById(R.id.inpPassword);
+        etKotaAsal = findViewById(R.id.listlokasi);
         btnRegister = findViewById(R.id.btnRegister);
 
-        // Inisialisasi daftar pengguna
-        userList = new ArrayList<>();
+        // Konfigurasi AutoComplete untuk Email
+        ArrayAdapter<String> emailAdapter = new ArrayAdapter<>(this, android.R.layout.simple_dropdown_item_1line, emailsugestion);
+        acEmail.setAdapter(emailAdapter);
+        acEmail.addTextChangedListener(this);
 
-        // Logika tombol register
-        btnRegister.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                String email = inpEmail.getText().toString().trim();
-                String username = inpUsername.getText().toString().trim();
-                String password = inpPassword.getText().toString().trim();
+        // Konfigurasi dialog untuk memilih kota
+        etKotaAsal.setOnClickListener(v -> {
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setTitle("Pilih Lokasi Asal Mu");
+            builder.setItems(kota, (dialogInterface, item) -> {
+                etKotaAsal.setText(kota[item]);
+                dialogInterface.dismiss();
+            });
+            builder.show();
+        });
 
-                // Validasi input
-                if (TextUtils.isEmpty(email)) {
-                    Toast.makeText(Register.this, "Email tidak boleh kosong!", Toast.LENGTH_SHORT).show();
-                    return;
-                }
-                if (TextUtils.isEmpty(username)) {
-                    Toast.makeText(Register.this, "Username tidak boleh kosong!", Toast.LENGTH_SHORT).show();
-                    return;
-                }
-                if (TextUtils.isEmpty(password)) {
-                    Toast.makeText(Register.this, "Password tidak boleh kosong!", Toast.LENGTH_SHORT).show();
-                    return;
-                }
-                if (password.length() < 6) {
-                    Toast.makeText(Register.this, "Password minimal 6 karakter!", Toast.LENGTH_SHORT).show();
-                    return;
-                }
+        // Event klik tombol Register
+        btnRegister.setOnClickListener(v -> {
+            String email = acEmail.getText().toString().trim();
+            String username = etUsername.getText().toString().trim();
+            String password = etPassword.getText().toString().trim();
+            String kotaAsal = etKotaAsal.getText().toString().trim();
 
-                // Simpan data pengguna
-                boolean isSaved = saveUser(email, username, password);
-                if (isSaved) {
-                    Toast.makeText(Register.this, "Registrasi berhasil!", Toast.LENGTH_SHORT).show();
-                    finish(); // Kembali ke aktivitas sebelumnya
-                } else {
-                    Toast.makeText(Register.this, "Email sudah terdaftar!", Toast.LENGTH_SHORT).show();
-                }
+            // Validasi input
+            if (email.isEmpty() || username.isEmpty() || password.isEmpty() || kotaAsal.isEmpty()) {
+                Toast.makeText(Register.this, "Semua kolom harus diisi!", Toast.LENGTH_SHORT).show();
+                return;
             }
+
+            // Simpan data ke HashMap
+            userData.put("email", email);
+            userData.put("username", username);
+            userData.put("password", password);
+            userData.put("kotaAsal", kotaAsal);
+
+            // Tampilkan pesan sukses
+            Toast.makeText(Register.this, "Registrasi Berhasil!\n" + userData.toString(), Toast.LENGTH_LONG).show();
+
+            // Reset input setelah berhasil
+            acEmail.setText("");
+            etUsername.setText("");
+            etPassword.setText("");
+            etKotaAsal.setText("");
         });
     }
 
-    // Fungsi untuk menyimpan data pengguna ke daftar
-    private boolean saveUser(String email, String username, String password) {
-        // Periksa apakah email sudah ada di daftar
-        for (HashMap<String, String> user : userList) {
-            if (user.get("email").equals(email)) {
-                return false; // Email sudah terdaftar
-            }
-        }
+    @Override
+    public void beforeTextChanged(CharSequence charSequence, int start, int count, int after) {
+        // Tidak digunakan
+    }
 
-        // Simpan data pengguna ke daftar
-        HashMap<String, String> newUser = new HashMap<>();
-        newUser.put("email", email);
-        newUser.put("username", username);
-        newUser.put("password", password);
-        userList.add(newUser);
-        return true;
+    @Override
+    public void onTextChanged(CharSequence charSequence, int start, int before, int count) {
+        // Tidak digunakan
+    }
+
+    @Override
+    public void afterTextChanged(Editable editable) {
+        // Tidak digunakan
     }
 }
